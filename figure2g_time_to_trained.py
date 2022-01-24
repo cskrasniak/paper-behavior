@@ -28,9 +28,9 @@ institution_map, col_names = institution_map()
 if QUERY is True:
     # Query sessions
     use_subjects = query_subjects()
-    ses = (behavior_analysis.BehavioralSummaryByDate * use_subjects)
+    ses = (behavior_analysis.BehavioralSummaryByDate * use_subjects * subject.SubjectProject)
     ses = (ses & 'session_date <= date_trained').fetch(format='frame').reset_index()
-
+    ses['institution_short'][ses['subject_project']=='zador_les']='new_lab'
      # Construct dataframe
     training_time = pd.DataFrame(columns=['sessions'], data=ses.groupby('subject_nickname').size())
     ses['n_trials_date'] = ses['n_trials_date'].astype(int)
@@ -38,7 +38,9 @@ if QUERY is True:
     training_time['lab'] = ses.groupby('subject_nickname')['institution_short'].apply(list).str[0]
 
     # Change lab name into lab number
+    
     training_time['lab_number'] = training_time.lab.map(institution_map)
+    training_time=training_time[training_time['lab_number'].notna()]
     training_time = training_time.sort_values('lab_number')
     training_time = training_time.reset_index()
 
@@ -111,7 +113,7 @@ for j in range(5 * (len(axbox.artists) - 1), 5 * len(axbox.artists)):
 ax1.set(ylabel='Days to trained', xlabel='', ylim=[0, 60])
 ax1.get_legend().set_visible(False)
 # [tick.set_color(lab_colors[i]) for i, tick in enumerate(ax1.get_xticklabels())]
-plt.setp(ax1.xaxis.get_majorticklabels(), rotation=40)
+plt.setp(ax1.xaxis.get_majorticklabels(), rotation=90,ha='center')
 sns.despine(trim=True)
 plt.tight_layout()
 plt.savefig(join(fig_path, 'figure2g_time_to_trained.pdf'))
@@ -131,7 +133,7 @@ for j in range(5 * (len(axbox.artists) - 1), 5 * len(axbox.artists)):
 ax1.set(ylabel='Trials to trained', xlabel='')
 ax1.get_legend().set_visible(False)
 # [tick.set_color(lab_colors[i]) for i, tick in enumerate(ax1.get_xticklabels())]
-plt.setp(ax1.xaxis.get_majorticklabels(), rotation=40)
+plt.setp(ax1.xaxis.get_majorticklabels(), rotation=90,ha='center')
 format_fcn = ticker.FuncFormatter(lambda x, pos: '{:,.0f}'.format(x / 1e3) + 'K')
 ax1.yaxis.set_major_formatter(format_fcn)
 sns.despine(trim=True)

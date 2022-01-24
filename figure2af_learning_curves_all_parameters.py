@@ -28,7 +28,9 @@ if QUERY is True:
     b = (behavioral_analyses.BehavioralSummaryByDate * use_subjects * behavioral_analyses.BehavioralSummaryByDate.PsychResults)
     behav = b.fetch(order_by='institution_short, subject_nickname, training_day',
                     format='frame').reset_index()
+    behav['institution_short'][behav['subject_project']=='zador_les']='new_lab'
     behav['institution_code'] = behav.institution_short.map(institution_map)
+    behav=behav[behav['institution_code'].notna()]
 else:
     behav = load_csv('Fig2af.pkl')
 # exclude sessions with fewer than 100 trials
@@ -96,9 +98,9 @@ behav = behav.loc[behav['prob_left'] == 0.5]
 # ================================= #
 # Performance: plot one curve for each animal, one panel per lab
 fig = sns.FacetGrid(behav,
-                    col="institution_code", col_wrap=7, col_order=col_names,
+                    col="institution_code", col_wrap=8, col_order=col_names,
                     sharex=True, sharey=True, hue="subject_uuid", xlim=[-1, 40],
-                    height=FIGURE_HEIGHT, aspect=(FIGURE_WIDTH/7)/FIGURE_HEIGHT)
+                    height=FIGURE_HEIGHT, aspect=(FIGURE_WIDTH/8)/FIGURE_HEIGHT)
 fig.map(sns.lineplot, "training_day",
         "performance_easy", color='grey', alpha=0.3)
 fig.map(sns.lineplot, "training_day",
@@ -126,10 +128,10 @@ fig.savefig(os.path.join(figpath, "figure2a_learningcurves.png"), dpi=300)
 
 # Threshold: plot one curve for each animal, one panel per lab
 fig = sns.FacetGrid(behav,
-                    col="institution_code", col_wrap=7, col_order=col_names,
+                    col="institution_code", col_wrap=8, col_order=col_names,
                     sharex=True, sharey=True, hue="subject_uuid", xlim=[-1, 40],
                     ylim=[0, 40],
-                    height=FIGURE_HEIGHT, aspect=(FIGURE_WIDTH/7)/FIGURE_HEIGHT)
+                    height=FIGURE_HEIGHT, aspect=(FIGURE_WIDTH/8)/FIGURE_HEIGHT)
 fig.map(sns.lineplot, "training_day",
         "threshold", color='grey', alpha=0.3)
 fig.map(sns.lineplot, "training_day",
@@ -164,10 +166,10 @@ fig.savefig(os.path.join(figpath, "figure2b_threshold.png"), dpi=300)
 
 # Bias: plot one curve for each animal, one panel per lab
 fig = sns.FacetGrid(behav,
-                    col="institution_code", col_wrap=7, col_order=col_names,
+                    col="institution_code", col_wrap=8, col_order=col_names,
                     sharex=True, sharey=True, hue="subject_uuid", xlim=[-1, 40],
                     ylim=[-30, 30],
-                    height=FIGURE_HEIGHT, aspect=(FIGURE_WIDTH/7)/FIGURE_HEIGHT)
+                    height=FIGURE_HEIGHT, aspect=(FIGURE_WIDTH/8)/FIGURE_HEIGHT)
 fig.map(sns.lineplot, "training_day",
         "conv_bias", color='grey', alpha=0.3)
 fig.map(sns.lineplot, "training_day",
@@ -213,6 +215,7 @@ plt.tight_layout()
 fig.savefig(os.path.join(figpath, "figure2d_learningcurves_all_labs.pdf"))
 fig.savefig(os.path.join(
     figpath, "figure2d_learningcurves_all_labs.png"), dpi=300)
+
 # 2. Threshold
 # day from which we have data from all labs
 # new dataframe including summary per lab from 3 mice or more per day

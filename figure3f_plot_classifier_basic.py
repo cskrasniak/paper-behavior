@@ -20,7 +20,7 @@ FIG_PATH = figpath()
 colors = [[1, 1, 1], [1, 1, 1], [0.6, 0.6, 0.6]]
 seaborn_style()
 
-for DECODER in ['bayes', 'forest', 'regression']:
+for DECODER in ['forest']:#'bayes',, 'regression'
 
     # Load in results from csv file
     filename = f'classification_results_basic_{DECODER}.pkl'
@@ -82,14 +82,16 @@ for DECODER in ['bayes', 'forest', 'regression']:
     # sns.heatmap(data=decoding_result['confusion_matrix'].mean(), vmin=0, vmax=0.6)
     sns.heatmap(data=decoding_result['confusion_matrix'].mean(),
                 vmin=0, vmax=0.4)
-    ax1.plot([0, 7], [0, 7], '--w')
-    ax1.set(xticklabels=np.arange(1, n_labs + 1), yticklabels=np.arange(1, n_labs + 1),
+    ax1.plot([0, 8], [0, 8], '--w')
+    labels = ['Lab {}'.format(i) for i in range(1,9)]
+    labels.append('Thesis mice')
+    ax1.set(xticklabels=labels, yticklabels=labels,
             ylim=[0, n_labs], xlim=[0, n_labs],
             title='', ylabel=' ', xlabel='Predicted lab')
-    if DECODER == 'bayes':
-        ax1.set(ylabel='Actual lab')
-    plt.setp(ax1.xaxis.get_majorticklabels(), rotation=40)
-    plt.setp(ax1.yaxis.get_majorticklabels(), rotation=40)
+    # if DECODER == 'bayes':
+    ax1.set(ylabel='Actual lab')
+    plt.setp(ax1.xaxis.get_majorticklabels(), rotation=90)
+    plt.setp(ax1.yaxis.get_majorticklabels(), rotation=0)
     plt.gca().invert_yaxis()
     plt.tight_layout()
 
@@ -101,8 +103,8 @@ for DECODER in ['bayes', 'forest', 'regression']:
     # sns.heatmap(data=decoding_result['control_cm'].mean(), vmin=0, vmax=1)
     sns.heatmap(data=decoding_result['control_cm'].mean(),
                 vmin=0, vmax=0.4)
-    ax1.plot([0, 7], [0, 7], '--w')
-    ax1.set(xticklabels=np.arange(1, n_labs + 1), yticklabels=np.arange(1, n_labs + 1),
+    ax1.plot([0, 9], [0, 9], '--w')
+    ax1.set(xticklabels=labels, yticklabels=labels,
             title='', ylabel=' ', xlabel='Predicted lab',
             ylim=[0, n_labs], xlim=[0, n_labs])
 

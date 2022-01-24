@@ -15,7 +15,7 @@ from ibl_pipeline.analyses import behavior as behavior_analysis
 # =========================
 
 all_mice = (subject.Subject * subject.SubjectLab * reference.Lab * subject.SubjectProject()
-            & 'subject_project = "ibl_neuropixel_brainwide_01"').aggr(
+            & 'subject_project = "ibl_neuropixel_brainwide_01" OR subject_project = "zador_les"').aggr(
     acquisition.Session, first_session='min(date(session_start_time))')
 
 # Filter mice that started training after the paper's cutoff date

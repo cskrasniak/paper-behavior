@@ -9,6 +9,7 @@ import os
 from os.path import join
 import pandas as pd
 import matplotlib.pyplot as plt
+os.chdir(r'C:\Users\chris\int-brain-lab\paper-behavior')
 from paper_behavior_functions import (figpath, seaborn_style, group_colors, load_csv,
                                       query_sessions_around_criterion, institution_map,
                                       FIGURE_HEIGHT, FIGURE_WIDTH, QUERY, EXAMPLE_MOUSE,
@@ -51,7 +52,7 @@ if QUERY is True:
 
     # also get info about each subject
     subject_info = subject.Subject.proj('subject_nickname') * \
-        (subject.SubjectLab * reference.Lab).proj('institution_short')
+        (subject.SubjectLab * subject.SubjectProject * reference.Lab).proj('institution_short', 'subject_project')
 
     # Fetch, join and sort data as a pandas DataFrame
     behav = dj2pandas(trials.fetch(format='frame')
@@ -60,6 +61,9 @@ if QUERY is True:
                                        'session_start_time', 'trial_id'])
                       .reset_index())
     behav['institution_code'] = behav.institution_short.map(institution_map)
+    behav['institution_short'][behav['subject_project']=='zador_les']='new_lab'
+    behav['institution_code'] = behav.institution_short.map(institution_map)
+    behav=behav[behav['institution_code'].notna()]
 else:
     behav = load_csv('Fig3.csv')
 
@@ -78,9 +82,9 @@ behav['institution_name'] = behav.institution_code + '\n ' + behav.n_mice.apply(
 # plot one curve for each animal, one panel per lab
 plt.close('all')
 fig = sns.FacetGrid(behav,
-                    col="institution_code", col_wrap=7, col_order=col_names,
+                    col="institution_code", col_wrap=4, col_order=col_names,
                     sharex=True, sharey=True, hue="subject_uuid",
-                    height=FIGURE_HEIGHT, aspect=(FIGURE_WIDTH/7)/FIGURE_HEIGHT)
+                    height=FIGURE_HEIGHT, aspect=(FIGURE_WIDTH/8)/FIGURE_HEIGHT)
 fig.map(plot_psychometric, "signed_contrast", "choice_right",
         "subject_nickname", color='gray', alpha=0.7)
 fig.set_titles("{col_name}")

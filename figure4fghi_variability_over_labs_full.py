@@ -30,14 +30,14 @@ if QUERY is True:
     # query sessions
     from paper_behavior_functions import query_sessions_around_criterion
     from ibl_pipeline import reference, subject, behavior
-    use_sessions, _ = query_sessions_around_criterion(criterion='ephys',
-                                                      days_from_criterion=[2, 0],
+    use_sessions, _ = query_sessions_around_criterion(criterion='biased',
+                                                      days_from_criterion=[-7,10],
                                                       force_cutoff=True)
-    session_keys = (use_sessions & 'task_protocol LIKE "%biased%"').fetch('KEY')
-    ses = ((use_sessions & 'task_protocol LIKE "%biased%"')
-           * subject.Subject * subject.SubjectLab * reference.Lab
+    session_keys = (use_sessions & 'task_protocol LIKE "%biased%" OR task_protocol LIKE "%widefield%"').fetch('KEY')
+    ses = ((use_sessions & 'task_protocol LIKE "%biased%" OR task_protocol LIKE "%widefield%"')
+           * subject.Subject * subject.SubjectLab * subject.SubjectProject * reference.Lab
            * (behavior.TrialSet.Trial & session_keys))
-    ses = ses.proj('institution_short', 'subject_nickname', 'task_protocol', 'session_uuid',
+    ses = ses.proj('institution_short', 'subject_project','subject_nickname', 'task_protocol', 'session_uuid',
                    'trial_stim_contrast_left', 'trial_stim_contrast_right',
                    'trial_response_choice', 'task_protocol', 'trial_stim_prob_left',
                    'trial_feedback_type', 'trial_response_time', 'trial_stim_on_time',
@@ -45,7 +45,9 @@ if QUERY is True:
                        order_by='institution_short, subject_nickname,session_start_time, trial_id',
                        format='frame').reset_index()
     behav = dj2pandas(ses)
+    behav['institution_short'][behav['subject_project']=='zador_les']='new_lab'
     behav['institution_code'] = behav.institution_short.map(institution_map)
+    behav=behav[behav['institution_code'].notna()]
 else:
     behav = load_csv('Fig4.csv')
 

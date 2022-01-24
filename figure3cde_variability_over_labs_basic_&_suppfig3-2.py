@@ -34,9 +34,9 @@ if QUERY is True:
                                                       days_from_criterion=[2, 0])
     session_keys = (use_sessions & 'task_protocol LIKE "%training%"').fetch('KEY')
     ses = ((use_sessions & 'task_protocol LIKE "%training%"')
-           * subject.Subject * subject.SubjectLab * reference.Lab
+           * subject.Subject * subject.SubjectProject * subject.SubjectLab * reference.Lab
            * (behavior.TrialSet.Trial & session_keys))
-    ses = ses.proj('institution_short', 'subject_nickname', 'task_protocol', 'session_uuid',
+    ses = ses.proj('institution_short', 'subject_project','subject_nickname', 'task_protocol', 'session_uuid',
                    'trial_stim_contrast_left', 'trial_stim_contrast_right',
                    'trial_response_choice', 'task_protocol', 'trial_stim_prob_left',
                    'trial_feedback_type', 'trial_response_time', 'trial_stim_on_time',
@@ -45,6 +45,9 @@ if QUERY is True:
                        format='frame').reset_index()
     behav = dj2pandas(ses)
     behav['institution_code'] = behav.institution_short.map(institution_map)
+    behav['institution_short'][behav['subject_project']=='zador_les']='new_lab'
+    behav['institution_code'] = behav.institution_short.map(institution_map)
+    behav=behav[behav['institution_code'].notna()]
 else:
     behav = load_csv('Fig3.csv', parse_dates=['session_start_time', 'session_end_time'])
 
@@ -150,7 +153,7 @@ if (stats.normaltest(learned['n_trials'])[1] > 0.05 and
 
 # Add all mice to dataframe seperately for plotting
 learned_no_all = learned.copy()
-learned_no_all.loc[learned_no_all.shape[0] + 1, 'lab_number'] = 'All'
+# learned_no_all.loc[learned_no_all.shape[0] + 1, 'lab_number'] = 'All'
 learned_2 = learned.copy()
 learned_2['lab_number'] = 'All'
 learned_2 = learned.append(learned_2)
@@ -169,12 +172,12 @@ for v, ylab, ylim in zip(vars, ylabels, ylims):
 
     f, ax = plt.subplots(1, 1, figsize=(FIGURE_WIDTH/5, FIGURE_HEIGHT))
     sns.swarmplot(y=v, x='lab_number', data=learned_no_all, hue='lab_number',
-                  palette=lab_colors, ax=ax, marker='.')
+                  palette=lab_colors, ax=ax, marker='.',size=2)
     axbox = sns.boxplot(y=v, x='lab_number', data=learned_2, color='white',
                         showfliers=False, ax=ax)
     ax.set(ylabel=ylab, ylim=ylim, xlabel='')
     # [tick.set_color(lab_colors[i]) for i, tick in enumerate(ax5.get_xticklabels()[:-1])]
-    plt.setp(ax.xaxis.get_majorticklabels(), rotation=60)
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=90,ha='center')
     axbox.artists[-1].set_edgecolor('black')
     for j in range(5 * (len(axbox.artists) - 1), 5 * len(axbox.artists)):
         axbox.lines[j].set_color('black')
@@ -189,7 +192,7 @@ for v, ylab, ylim in zip(vars, ylabels, ylims):
     sns.despine(trim=True)
     plt.tight_layout()
     plt.savefig(join(figpath, 'figure3_metrics_%s.pdf'%v))
-    plt.savefig(join(figpath, 'figure3_metrics_%s.pdf'%v), dpi=300)
+    plt.savefig(join(figpath, 'figure3_metrics_%s.png'%v), dpi=300)
 
 # %%
 # Get stats for text

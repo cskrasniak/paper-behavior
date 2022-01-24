@@ -40,13 +40,13 @@ sns.set_palette(cmap)
 
 if QUERY is True:
     # query sessions
-    use_sessions, _ = query_sessions_around_criterion(criterion='ephys',
-                                                      days_from_criterion=[2, 0],
-                                                      force_cutoff=True)
-    use_sessions = use_sessions & 'task_protocol LIKE "%biased%"'  # only get biased sessions
+    use_sessions, _ = query_sessions_around_criterion(criterion='biased',
+                                                      days_from_criterion=[-4, 6],
+                                                      force_cutoff=False)
+    use_sessions = (use_sessions & 'task_protocol LIKE "%biased%" or task_protocol LIKE "%widefield%"')  # only get biased sessions
 
     # restrict by list of dicts with uuids for these sessions
-    b = (use_sessions * subject.Subject * subject.SubjectLab * reference.Lab
+    b = (use_sessions * subject.Subject * subject.SubjectProject * subject.SubjectLab * reference.Lab
          * behavior.TrialSet.Trial)
 
     # reduce the size of the fetch
@@ -59,7 +59,10 @@ if QUERY is True:
     bdat = b2.fetch(order_by='institution_short, subject_nickname, session_start_time, trial_id',
                     format='frame').reset_index()
     behav = dj2pandas(bdat)
+    behav['institution_short'][behav['subject_project']=='zador_les']='new_lab'
     behav['institution_code'] = behav.institution_short.map(institution_map)
+    behav=behav[behav['institution_code'].notna()]
+
 else:
     behav = load_csv('Fig4.csv')
 
@@ -149,9 +152,9 @@ behav3['biasshift'] = behav3[20] - behav3[80]
 # plot one curve for each animal, one panel per lab
 plt.close('all')
 fig = sns.FacetGrid(behav3,
-                    col="institution_code", col_wrap=7, col_order=col_names,
+                    col="institution_code", col_wrap=8, col_order=col_names,
                     sharex=True, sharey=True, hue="subject_nickname",
-                    height=FIGURE_HEIGHT, aspect=(FIGURE_WIDTH/7)/FIGURE_HEIGHT)
+                    height=FIGURE_HEIGHT, aspect=(FIGURE_WIDTH/8)/FIGURE_HEIGHT)
 fig.map(plot_chronometric, "signed_contrast", "biasshift",
         "subject_nickname", color='gray', alpha=0.7)
 
@@ -231,9 +234,9 @@ sns.boxplot(y='biasshift', x='institution_code', data=bias_all, ax=ax1)
 ax1.set(ylabel='\u0394 Rightward choices (%)\n at 0% contrast',
         ylim=[0, 51], xlabel='')
 [tick.set_color(pal[i]) for i, tick in enumerate(ax1.get_xticklabels()[:-1])]
-plt.setp(ax1.xaxis.get_majorticklabels(), rotation=40)
+plt.setp(ax1.xaxis.get_majorticklabels(), rotation=90,ha='center')
 plt.tight_layout(pad=2)
 seaborn_style()
 
-# plt.savefig(os.path.join(figpath, 'figure4e_bias_per_lab.pdf'))
-# plt.savefig(os.path.join(figpath, 'figure4e_bias_per_lab.png'), dpi=300)
+plt.savefig(os.path.join(figpath, 'figure4e_bias_per_lab.pdf'))
+plt.savefig(os.path.join(figpath, 'figure4e_bias_per_lab.png'), dpi=300)
