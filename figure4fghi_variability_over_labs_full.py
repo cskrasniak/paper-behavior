@@ -30,11 +30,11 @@ if QUERY is True:
     # query sessions
     from paper_behavior_functions import query_sessions_around_criterion
     from ibl_pipeline import reference, subject, behavior
-    use_sessions, _ = query_sessions_around_criterion(criterion='biased',
-                                                      days_from_criterion=[-7,10],
-                                                      force_cutoff=True)
-    session_keys = (use_sessions & 'task_protocol LIKE "%biased%" OR task_protocol LIKE "%widefield%"').fetch('KEY')
-    ses = ((use_sessions & 'task_protocol LIKE "%biased%" OR task_protocol LIKE "%widefield%"')
+    use_sessions, _ = query_sessions_around_criterion(criterion='ephys',
+                                                      days_from_criterion=[2,2],
+                                                      force_cutoff=False)
+    session_keys = (use_sessions & 'task_protocol LIKE "%bias%" OR task_protocol LIKE "%widefield%"').fetch('KEY')
+    ses = ((use_sessions & 'task_protocol LIKE "%bias%" OR task_protocol LIKE "%widefield%"')
            * subject.Subject * subject.SubjectLab * subject.SubjectProject * reference.Lab
            * (behavior.TrialSet.Trial & session_keys))
     ses = ses.proj('institution_short', 'subject_project','subject_nickname', 'task_protocol', 'session_uuid',
@@ -50,7 +50,8 @@ if QUERY is True:
     behav=behav[behav['institution_code'].notna()]
 else:
     behav = load_csv('Fig4.csv')
-
+keep=np.array(behav['probabilityLeft']== 50) | np.array(behav['probabilityLeft']== 20) | np.array(behav['probabilityLeft']== 80)
+behav=behav[keep]
 biased_fits = pd.DataFrame()
 for i, nickname in enumerate(behav['subject_nickname'].unique()):
     if np.mod(i+1, 10) == 0:
@@ -75,9 +76,9 @@ for i, nickname in enumerate(behav['subject_nickname'].unique()):
                               'lapsehigh_r': right_fit['lapsehigh'],
                               'nickname': nickname, 'lab': lab})
     biased_fits = biased_fits.append(fits, sort=False)
-
+biased_fits=biased_fits.dropna()
 # %% Statistics
-stats_tests = pd.DataFrame(columns=['variable', 'test_type', 'p_value'])
+stats_tests = pd.DataFrame(columns=['variable', 'test_type', 'stat_value','p_value'])
 posthoc_tests = {}
 
 for i, var in enumerate(['threshold_l', 'threshold_r', 'lapselow_l', 'lapselow_r', 'lapsehigh_l',
@@ -105,7 +106,7 @@ for i, var in enumerate(['threshold_l', 'threshold_r', 'lapselow_l', 'lapselow_r
     stats_tests.loc[i, 'variable'] = var
     stats_tests.loc[i, 'test_type'] = test_type
     stats_tests.loc[i, 'p_value'] = test[1]
-
+    stats_tests.loc[i,'stat_value'] = test[0]
 # Correct for multiple tests
 stats_tests['p_value'] = multipletests(stats_tests['p_value'], method='fdr_bh')[1]
 
@@ -113,7 +114,7 @@ stats_tests['p_value'] = multipletests(stats_tests['p_value'], method='fdr_bh')[
 for i, var in enumerate(['threshold', 'lapselow', 'lapsehigh', 'bias']):
     stats_tests.loc[stats_tests.shape[0] + 1, 'variable'] = '%s_blocks' % var
     stats_tests.loc[stats_tests.shape[0], 'test_type'] = 'wilcoxon'
-    _, stats_tests.loc[stats_tests.shape[0], 'p_value'] = stats.wilcoxon(
+    stats_tests.loc[stats_tests.shape[0], 'stat_value'], stats_tests.loc[stats_tests.shape[0], 'p_value'] = stats.wilcoxon(
                                     biased_fits['%s_l' % var], biased_fits['%s_r' % var])
 print(stats_tests)  # Print the results
 

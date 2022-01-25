@@ -149,7 +149,7 @@ def query_subjects(as_dataframe=False, from_list=False, criterion='trained'):
         elif criterion == 'biased':
             restriction = 'task_protocol LIKE "%biased%" OR task_protocol LIKE "%widefield%"'
         elif criterion == 'ephys':
-            restriction = 'training_status LIKE "ready%" OR task_protocol LIKE "%widefield%"'
+            restriction = 'task_protocol LIKE "%ephys%" OR task_protocol LIKE "%widefield%"'
         else:
             raise ValueError('criterion must be "trained", "biased" or "ephys"')
         subj_query = all_subjects.aggr(
